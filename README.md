@@ -175,6 +175,14 @@ output = run_Unsupervise_AD(AD_Name, data)
 evaluation_result = get_metrics(output, label)
 ```
 
+<h3 id="gpu">⚡ GPU Acceleration</h3>
+
+GPU versions (PyTorch, CUDA or Apple MPS) of the VUS metrics and of `Sub_PCA`/`PCA`, `Sub_KNN`/`KNN`,
+`KMeansAD_U`/`KMeansAD` and `MatrixProfile` are available as `<name>_GPU` in `run_Unsupervise_AD`, and the
+GPU VUS as `get_metrics(..., version='gpu')`. On an A100 they run 3x to 100x faster than the CPU versions (the VUS metrics 50x to 240x)
+with matching results; see [benchmark_exp/gpu](benchmark_exp/gpu/README.md) for usage, validation and
+benchmarks.
+
 <h3 id="custom">🧑‍💻 Customized Development</h3>
 
 Examples of how to run the benchmark experiments and develop your own algorithms can be found [here](https://github.com/TheDatumOrg/TSB-AD/tree/main/benchmark_exp), covering:

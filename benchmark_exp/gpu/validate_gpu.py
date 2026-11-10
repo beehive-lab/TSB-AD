@@ -57,6 +57,8 @@ if __name__ == '__main__':
     ap.add_argument('--multi', action='store_true', help="use TSB-AD's multivariate hyperparameters")
     ap.add_argument('--skip_cpu_vus', action='store_true', help='score VUS with the GPU version only')
     ap.add_argument('--cpu_vus_every', type=int, default=1, help='run the CPU VUS reference on every n-th file only')
+    ap.add_argument('--no_seed2', action='store_true', help='skip the second CPU k-means seed')
+    ap.add_argument('--resume', action='store_true', help='keep the rows already in --out and skip their files and detectors')
     ap.add_argument('--out', default='validate_gpu.csv')
     ap.add_argument('--ref_out', default=None,
                     help='also write the CPU scores (REF/DET/STEM.f64) and times (REF/results.csv) for reuse')
@@ -70,12 +72,17 @@ if __name__ == '__main__':
         files = files[:args.limit]
     print('device:', get_device())
     rows = []
+    if args.resume and os.path.exists(args.out):
+        rows = pd.read_csv(args.out).to_dict('records')
+    done = {(r['file'], r['detector']) for r in rows}
     for fi, f in enumerate(files):
         df = pd.read_csv(os.path.join(args.dataset_dir, f)).dropna()
         data = df.iloc[:, 0:-1].values.astype(float)
         label = df['Label'].astype(int).to_numpy()
         sw = find_length_rank(data[:, 0].reshape(-1, 1), rank=1)
         for name in args.detectors:
+            if (f, name) in done:
+                continue
             hp = hp_dict[name]
             cpu, t_cpu = timed(lambda: run_Unsupervise_AD(name, data, **hp))
             gpu, t_gpu = timed(lambda: run_Unsupervise_AD(name + '_GPU', data, **hp))
@@ -94,7 +101,7 @@ if __name__ == '__main__':
                        corr=corr, max_abs_diff=float(np.abs(a - b).max()),
                        vus_pr_gpu=vp_g, vus_roc_gpu=vr_g, vus_pr_cpu=vp_gc, vus_roc_cpu=vr_gc, t_vus_gpu=t_vus_g,
                        vus_pr_cpu_jitter=vp_jit, vus_pr_cpu_r6=vp_c6, vus_pr_gpu_r6=vp_g6)
-            if name.startswith('KMeansAD'):
+            if name.startswith('KMeansAD') and not args.no_seed2:
                 # k-means depends on its random seeding: a second CPU seed gives the spread to expect
                 cpu2, _ = timed(lambda: run_Unsupervise_AD(name, data, **hp), seed=2025)
                 row.update(vus_pr_cpu_seed2=vus(label, norm(cpu2), sw)[1])
