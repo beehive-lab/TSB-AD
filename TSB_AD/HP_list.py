@@ -347,3 +347,10 @@ Optimal_Uni_algo_HP_dict = {
     'AxonAD': {'win_size': 100, 'd_model': 128, 'num_heads': 8, 'lr': 0.0005, 'kl_tail_k': 10, 'forecast_steps': 1},
     'VERITY_AD': {},
 }
+
+
+# GPU versions share the hyperparameters of their CPU counterparts
+for _hp in (Optimal_Uni_algo_HP_dict, Optimal_Multi_algo_HP_dict):
+    for _name in ('Sub_PCA', 'PCA', 'Sub_KNN', 'KNN', 'KMeansAD', 'KMeansAD_U', 'MatrixProfile'):
+        if _name in _hp:
+            _hp[_name + '_GPU'] = dict(_hp[_name])

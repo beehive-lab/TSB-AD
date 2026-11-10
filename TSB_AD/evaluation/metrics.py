@@ -12,7 +12,12 @@ def get_metrics(score, labels, slidingWindow=100, pred=None, version='opt', thre
     AUC_PR = grader.metric_PR(labels, score)
 
     # R_AUC_ROC, R_AUC_PR, _, _, _ = grader.RangeAUC(labels=labels, score=score, window=slidingWindow, plot_ROC=True)
-    _, _, _, _, _, _,VUS_ROC, VUS_PR = generate_curve(labels.astype(int), score, slidingWindow, version, thre)
+    if version == 'gpu':
+        # same values as version='opt', computed on the GPU (see TSB_AD/gpu/vus.py)
+        from ..gpu.vus import vus
+        VUS_ROC, VUS_PR = vus(labels.astype(int), score, slidingWindow, thre)
+    else:
+        _, _, _, _, _, _,VUS_ROC, VUS_PR = generate_curve(labels.astype(int), score, slidingWindow, version, thre)
 
 
     '''

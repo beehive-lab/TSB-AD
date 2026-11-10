@@ -35,6 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_dir', type=str, default='eval/metrics/multi/')
     parser.add_argument('--save', type=bool, default=False)
     parser.add_argument('--AD_Name', type=str, default='IForest')
+    parser.add_argument('--gpu_metrics', action='store_true', help='compute VUS-PR / VUS-ROC on the GPU (same values)')
     args = parser.parse_args()
 
 
@@ -84,7 +85,7 @@ if __name__ == '__main__':
         ### whether to save the evaluation result
         if args.save:
             try:
-                evaluation_result = get_metrics(output, label, slidingWindow=slidingWindow)
+                evaluation_result = get_metrics(output, label, slidingWindow=slidingWindow, version='gpu' if args.gpu_metrics else 'opt')
                 print('evaluation_result: ', evaluation_result)
                 list_w = list(evaluation_result.values())
             except:

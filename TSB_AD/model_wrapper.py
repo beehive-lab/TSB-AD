@@ -6,7 +6,8 @@ from sklearn.preprocessing import MinMaxScaler
 from .utils.slidingWindows import find_length_rank
 
 Unsupervise_AD_Pool = ['FFT', 'SR', 'NORMA', 'Series2Graph', 'Sub_IForest', 'IForest', 'LOF', 'Sub_LOF', 'POLY', 'MatrixProfile', 'Sub_PCA', 'PCA', 'HBOS',
-                        'Sub_HBOS', 'KNN', 'Sub_KNN','KMeansAD', 'KMeansAD_U', 'KShapeAD', 'COPOD', 'CBLOF', 'COF', 'EIF', 'RobustPCA', 'MMPAD', 'Lag_Llama', 'TimesFM', 'Chronos', 'MOMENT_ZS', 'TSPulse_ZS', 'Time_RCD', 'HSF_U', 'HSF_Causal']
+                        'Sub_HBOS', 'KNN', 'Sub_KNN','KMeansAD', 'KMeansAD_U', 'KShapeAD', 'COPOD', 'CBLOF', 'COF', 'EIF', 'RobustPCA', 'MMPAD', 'Lag_Llama', 'TimesFM', 'Chronos', 'MOMENT_ZS', 'TSPulse_ZS', 'Time_RCD', 'HSF_U', 'HSF_Causal',
+                        'Sub_PCA_GPU', 'PCA_GPU', 'Sub_KNN_GPU', 'KNN_GPU', 'KMeansAD_GPU', 'KMeansAD_U_GPU', 'MatrixProfile_GPU']
 Semisupervise_AD_Pool = ['Left_STAMPi', 'SAND', 'MCD', 'Sub_MCD', 'OCSVM', 'Sub_OCSVM', 'AutoEncoder', 'CNN', 'LSTMAD', 'TranAD', 'USAD', 'OmniAnomaly', 'PatchTST',
                         'AnomalyTransformer', 'TimesNet', 'FITS', 'Donut', 'OFA', 'MOMENT_FT', 'M2N2', 'TSPulse_FT', 'xLSTMAD', 'CHARM', 'StreamVAE', 'HSF', 'PaAno_PAI', 'SHADE', 'TimeRCD_MAFT', 'AxonAD', 'VERITY_AD', 'Syntropic']
 
@@ -653,3 +654,38 @@ def run_VERITY_AD(data_train, data_test, **kwargs):
     score = run_VERITY_AD_Semisupervised(data_train, data_test, HP=kwargs)
     return np.asarray(score).ravel()
 
+
+
+# GPU versions (PyTorch on CUDA or Apple MPS; see TSB_AD/gpu)
+
+def run_Sub_PCA_GPU(data, periodicity=1, n_components=None, n_jobs=1):
+    from .gpu.detectors import SubPCA
+    slidingWindow = find_length_rank(data, rank=periodicity)
+    return SubPCA(slidingWindow=slidingWindow, n_components=n_components).fit(data).decision_scores_.ravel()
+
+def run_PCA_GPU(data, slidingWindow=100, n_components=None, n_jobs=1):
+    from .gpu.detectors import SubPCA
+    return SubPCA(slidingWindow=slidingWindow, n_components=n_components).fit(data).decision_scores_.ravel()
+
+def run_Sub_KNN_GPU(data, n_neighbors=10, method='largest', periodicity=1, n_jobs=1):
+    from .gpu.detectors import SubKNN
+    slidingWindow = find_length_rank(data, rank=periodicity)
+    return SubKNN(slidingWindow=slidingWindow, n_neighbors=n_neighbors, method=method).fit(data).decision_scores_.ravel()
+
+def run_KNN_GPU(data, slidingWindow=1, n_neighbors=10, method='largest', n_jobs=1):
+    from .gpu.detectors import SubKNN
+    return SubKNN(slidingWindow=slidingWindow, n_neighbors=n_neighbors, method=method).fit(data).decision_scores_.ravel()
+
+def run_KMeansAD_GPU(data, n_clusters=20, window_size=20, n_jobs=1):
+    from .gpu.detectors import KMeansAD
+    return KMeansAD(k=n_clusters, window_size=window_size).fit_predict(data).ravel()
+
+def run_KMeansAD_U_GPU(data, n_clusters=20, periodicity=1, n_jobs=1):
+    from .gpu.detectors import KMeansAD
+    slidingWindow = find_length_rank(data, rank=periodicity)
+    return KMeansAD(k=n_clusters, window_size=slidingWindow).fit_predict(data).ravel()
+
+def run_MatrixProfile_GPU(data, periodicity=1, n_jobs=1):
+    from .gpu.detectors import MatrixProfile
+    slidingWindow = find_length_rank(data, rank=periodicity)
+    return MatrixProfile(window=slidingWindow).fit(data).decision_scores_.ravel()
